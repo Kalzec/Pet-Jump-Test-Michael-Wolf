@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+/// <summary>
+/// Class to create a pool of objects to use as obstacles
+/// </summary>
 public class ObstacleSpawner : MonoBehaviour
 {
     public GameObject obstaclePrefab; // Prefab of the obstacle object
@@ -9,7 +12,7 @@ public class ObstacleSpawner : MonoBehaviour
     public float spawnIntervalMax = 3f; // Maximum time interval between obstacle spawns
     public float obstacleSpeed = 5f; // Speed at which the obstacles move
 
-    private List<GameObject> obstaclePool; // Pool of obstacle objects
+    public List<GameObject> obstaclePool; // Pool of obstacle objects
     private float nextSpawnTime; // Time to spawn the next obstacle
 
     private void Start()
@@ -28,7 +31,13 @@ public class ObstacleSpawner : MonoBehaviour
 
     private void Update()
     {
-        if (Time.time >= nextSpawnTime)
+        if (GameData.isPaused)
+        {
+            nextSpawnTime = Time.time + Random.Range(spawnIntervalMin, spawnIntervalMax); // Calculate the next spawn time
+            return;
+        }
+
+        if (Time.time >= nextSpawnTime && GameData.isPaused == false)
         {
             SpawnObstacle();
             nextSpawnTime = Time.time + Random.Range(spawnIntervalMin, spawnIntervalMax); // Calculate the next spawn time
@@ -36,7 +45,7 @@ public class ObstacleSpawner : MonoBehaviour
 
         for (int i = 0; i < obstaclePool.Count; i++)
         {
-            if (obstaclePool[i].activeInHierarchy && obstaclePool[i].transform.position.x < -8f)
+            if (obstaclePool[i].activeInHierarchy && obstaclePool[i].transform.position.x < -10f)
             {
                 obstaclePool[i].SetActive(false);
             }
@@ -49,15 +58,15 @@ public class ObstacleSpawner : MonoBehaviour
 
         if (obstacle != null)
         {
-            obstacle.transform.position = new Vector3(8f, 0.641f, 0f);
+            obstacle.transform.position = new Vector3(10f, 0.641f, 0f);
             obstacle.SetActive(true);
 
             Rigidbody obstacleRigidbody = obstacle.GetComponent<Rigidbody>();
-            obstacleRigidbody.velocity = new Vector2(-obstacleSpeed, 0f);
+            obstacle.GetComponent<Obstacle>().speedIncrease = true;
         }
     }
 
-    private GameObject GetPooledObstacle()
+    public GameObject GetPooledObstacle()
     {
         for (int i = 0; i < obstaclePool.Count; i++)
         {
@@ -66,5 +75,15 @@ public class ObstacleSpawner : MonoBehaviour
         }
 
         return null;
+    }
+
+    public void resetPool()
+    {
+        for(int i = 0; i < obstaclePool.Count; i++)
+        {
+            obstaclePool[i].SetActive(true);
+            obstaclePool[i].GetComponent<Obstacle>().obstacleSpeed = obstaclePool[i].GetComponent<Obstacle>().startSpeed;
+            obstaclePool[i].SetActive(false);
+        }
     }
 }
